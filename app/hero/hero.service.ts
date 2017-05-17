@@ -1,0 +1,72 @@
+import { Injectable } from '@angular/core';
+import { Headers, Http } from '@angular/http';
+
+import 'rxjs/add/operator/toPromise';
+
+import { Hero } from './hero';
+
+@Injectable()
+export class HeroService {
+    // hearoes url constant
+    private heroesUrl = 'app/heroes';
+    private headers = new Headers({'Content-Type': 'application/json'});
+
+    constructor(private http: Http) {}
+
+    // getter for heroes array
+    getHeroes(): Promise<Hero[]> {
+        return this.http.get(this.heroesUrl)
+            .toPromise()
+            .then(response => response.json().data as Hero[])
+            .catch(this.handleError);
+    }
+
+    // get a hero by id
+    getHeroById(id: number): Promise<Hero> {
+        return this.getHeroes()
+                .then(heroes => heroes.find(hero => hero.id === id));
+    }
+
+    // updates a hero
+    update(hero: Hero): Promise<Hero> {
+        const url = `${ this.heroesUrl }/${ hero.id }`;
+        return this.http.put(
+            url, 
+            JSON.stringify(hero),
+            { headers: this.headers }
+        ).toPromise()
+        .then(() => hero)
+        .catch(this.handleError);
+    }
+
+    // creates a new hero
+    createHero(name: string): Promise<Hero> {
+        return this.http.post(
+            this.heroesUrl,
+            JSON.stringify({
+                name: name
+            }),
+            { headers: this.headers },
+        )
+        .toPromise()
+        .then(response => response.json().data)
+        .catch(this.handleError);
+    }
+
+    deleteHero(id: number): Promise<void> {
+        const url = `${ this.heroesUrl }/${ id }`;
+        return this.http.delete(
+            url,
+            { headers: this.headers }
+        )
+        .toPromise()
+        .then(() => null)
+        .catch(this.handleError);
+    }
+
+    // handles the error if there is one
+    private handleError(error: any): Promise<any> {
+        console.error('An error occured', error);
+        return Promise.reject(error.message || error);
+    }
+}
